@@ -1,0 +1,157 @@
+getgenv().Config = getgenv().Config or {
+    BackgroundColors = {"#FFF0F5", "#FFFFFF"},
+    ShowDecals = true,
+    DecalSize = 25,
+    CustomIcons = {
+        "99621050786909",
+        "132594641536971",
+        "102946999622375",
+        "125751906521282"
+    },
+    AuraSpeed = 0.8,
+    SpiralSpeed = 1.0,
+    Radius = 155,
+    RotationSpeed = 1.0,
+    BorderColors = {"#FFB4D2", "#FFFFFF"},
+    MaxFPS = 20
+}
+
+-- [PHẦN CHỈNH SỬA: LƯU FILE CHO ỔN ĐỊNH]
+local fileName = "AnnTimeData_" .. LocalPlayer.UserId .. ".txt"
+local function save_to_file(t)
+    pcall(function()
+        writefile(fileName, tostring(t))
+    end)
+end
+
+local function read_from_file()
+    local success, content = pcall(function() return readfile(fileName) end)
+    return success and tonumber(content) or 0
+end
+
+
+-- 1. HÀM LOCK FPS
+local function set_fps(cap)
+    local setter = setfpscap or set_fps_cap or setfps or (fluxus and fluxus.set_fps_cap)
+    if setter then pcall(function() setter(cap) end) end
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        local cfg = getgenv().Config
+        if cfg and cfg.MaxFPS then set_fps(cfg.MaxFPS) end
+    end
+end)
+local function read_from_file()
+    local success, content = pcall(function()
+        if isfile and isfile(fileName) then
+            return readfile(fileName)
+        end
+    end)
+    return success and tonumber(content) or 0
+end
+
+-- LOAD DATA
+local totalSavedTime = read_from_file()
+local startTime = tick()
+
+-- AUTO SAVE
+task.spawn(function()
+    while task.wait(15) do
+        local current = totalSavedTime + math.floor(tick() - startTime)
+        save_to_file(current)
+    end
+end)
+
+-- SAVE KHI THOÁT
+game:BindToClose(function()
+    local current = totalSavedTime + math.floor(tick() - startTime)
+    save_to_file(current)
+end)
+
+-- LOCK FPS
+local function set_fps(cap)
+    local setter = setfpscap or set_fps_cap or setfps or (fluxus and fluxus.set_fps_cap)
+    if setter then
+        pcall(function()
+            setter(cap)
+        end)
+    end
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        local cfg = getgenv().Config
+        if cfg and cfg.MaxFPS then
+            set_fps(cfg.MaxFPS)
+        end
+    end
+end)
+
+-- BOOST FPS FULL
+task.spawn(function()
+    for i,v in next, workspace:GetDescendants() do
+        pcall(function()
+
+            if v:IsA("BasePart") then
+                if v.Parent and v.Parent:FindFirstChild("Humanoid") then return end
+                v.Material = Enum.Material.SmoothPlastic
+                v.Reflectance = 0
+                v.CastShadow = false
+                v.Transparency = 1
+            end
+
+            if v:IsA("Decal") or v:IsA("Texture") then
+                v.Transparency = 1
+            end
+
+            if v:IsA("ParticleEmitter")
+            or v:IsA("Trail")
+            or v:IsA("Smoke")
+            or v:IsA("Fire")
+            or v:IsA("Sparkles") then
+                v.Enabled = false
+            end
+
+        end)
+    end
+end)
+
+-- LIGHTING BOOST
+task.spawn(function()
+    local Lighting = game:GetService("Lighting")
+
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 100000
+    Lighting.Brightness = 1
+
+    for i,v in pairs(Lighting:GetDescendants()) do
+        pcall(function()
+            if v:IsA("BlurEffect")
+            or v:IsA("SunRaysEffect")
+            or v:IsA("ColorCorrectionEffect")
+            or v:IsA("BloomEffect")
+            or v:IsA("DepthOfFieldEffect") then
+                v.Enabled = false
+            end
+        end)
+    end
+end)
+
+-- QUALITY LOW
+task.spawn(function()
+    pcall(function()
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+    end)
+end)
+
+-- AUTO ẨN OBJECT MỚI
+workspace.DescendantAdded:Connect(function(v)
+    pcall(function()
+        if v:IsA("BasePart") then
+            if v.Parent and v.Parent:FindFirstChild("Humanoid") then return end
+            v.Transparency = 1
+            v.CastShadow = false
+        end
+    end)
+end)
